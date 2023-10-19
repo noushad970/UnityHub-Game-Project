@@ -1,0 +1,1098 @@
+Character controller code for a character:
+__________________________________________
+
+//adding gravity
+for adding gravity on a player we have to do several things. Such as we have to add the ground tag to the game ground and
+we have to add ground layermask on the game ground. and than we have to add a player tag to the player and add player layer 
+on the player. we also set surface mask to surface or ground on the player. on camera we have to checked Culling mask is set 
+to everything. we also need to create a empty game object to player and rename it as SurfaceChecked and add that game object 
+to surfaceChecked on player  
+
+//camera setting
+for camera setting we have to add camera to the player transform.
+
+
+code: 
+
+   [Header("PlayerMovement")]
+    public float playerSpeed=1.1f;
+    public float playerSprint = 5f;
+    [Header("Player Animation & Gravity")]
+    public CharacterController cC;
+    public float gravity = -9.81f;
+
+    [Header("Player Jumping and velocity")]
+    public float turnCalmTime=0.1f;
+    private float turnCalmVelocity;
+    Vector3 velocity;
+    public Transform surfacecheck;//is grounded
+    bool OnSurface;
+    public float surfaceDistance = 0.4f;
+    public LayerMask surfaceMask;
+    public float jumrange = 1f;
+
+
+    [Header("Player Scripth Camera")]
+    public Transform playerCamera;
+
+    private void Update(){
+
+        Surface();
+        playerMove();
+        Jump();
+    }
+    void Surface()
+    {
+        OnSurface = Physics.CheckSphere(surfacecheck.position, surfaceDistance, surfaceMask);
+        if (OnSurface && velocity.y < 0)
+            velocity.y = -2f;
+        //gravity
+        velocity.y += gravity * Time.deltaTime;
+        cC.Move(velocity * Time.deltaTime);
+    }
+    void playerMove()
+    {
+        if (Input.GetKey(KeyCode.RightShift) && OnSurface && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.LeftArrow)))
+        {
+            playerSpeed = playerSprint;
+        }
+        else if (Input.GetKey(KeyCode.DownArrow) && OnSurface)
+        {
+            playerSpeed = -1.1f ;
+        }
+        else
+            playerSpeed = 1.1f;
+        float horizontal_move=Input.GetAxisRaw("Horizontal");
+        float Vertical_move=Input.GetAxisRaw("Vertical");
+        Vector3 direction= new Vector3(horizontal_move,0f,Vertical_move).normalized;
+
+        if(direction.magnitude>=0.1f){
+            float targetAngle=Mathf.Atan2(direction.x,direction.y)*Mathf.Rad2Deg + playerCamera.eulerAngles.y;
+        float angle=Mathf.SmoothDampAngle(transform.eulerAngles.y,targetAngle,ref turnCalmVelocity,turnCalmTime);
+        transform.rotation=Quaternion.Euler(0f,angle,0f);
+
+            Vector3 movedirection= Quaternion.Euler(0f,targetAngle,0f)*Vector3.forward;
+
+        cC.Move(movedirection.normalized*playerSpeed*Time.deltaTime)   ; 
+        }
+        
+    }
+    void Jump()
+    {
+        if (Input.GetButtonDown("Jump") && OnSurface)
+            velocity.y = Mathf.Sqrt(jumrange * -2 * gravity);
+    }
+
+
+
+player animation
+_____________________
+
+
+player animation is the movement of player. for that we have to add a player animator in the game and attach it with the player prefab. after that we have add animation 
+fbx file in a file and than we have to make changes in rig and make  animation type same as player animation type which is usually humonoid.
+for continious animation we have to double click on a fbx file on the animator controller and than checked loop time(enable) so that the animation could play again and again
+
+code for character controller with animation
+
+
+    [Header("PlayerMovement")]
+    public float playerSpeed = 1.1f;
+    public float playerSprint = 5f;
+    [Header("Player Animation & Gravity")]
+    public CharacterController cC;
+    public float gravity = -9.81f;
+    public Animator animator;
+
+    [Header("Player Jumping and velocity")]
+    public float turnCalmTime = 0.1f;
+    private float turnCalmVelocity;
+    Vector3 velocity;
+    public Transform surfacecheck;//is grounded
+    bool OnSurface;
+    public float surfaceDistance = 0.4f;
+    public LayerMask surfaceMask;
+    public float jumrange = 1f;
+
+
+    [Header("Player Scripth Camera")]
+    public Transform playerCamera;
+
+    private void Update()
+    {
+
+        Surface();
+        playerMove();
+        Jump();
+        sprint();
+    }
+    void Surface()
+    {
+        OnSurface = Physics.CheckSphere(surfacecheck.position, surfaceDistance, surfaceMask);
+        if (OnSurface && velocity.y < 0)
+            velocity.y = -2f;
+        //gravity
+        velocity.y += gravity * Time.deltaTime;
+        cC.Move(velocity * Time.deltaTime);
+    }
+    void playerMove()
+    {
+
+
+        if (Input.GetKey(KeyCode.DownArrow) && OnSurface)
+        {
+            playerSpeed = -1.1f;
+        }
+        else
+            playerSpeed = 1.1f;
+            float horizontal_move = Input.GetAxisRaw("Horizontal");
+        float Vertical_move = Input.GetAxisRaw("Vertical");
+        Vector3 direction = new Vector3(horizontal_move, 0f, Vertical_move).normalized;
+
+        if (direction.magnitude >= 0.1f)
+        {
+            animator.SetBool("Walk", true);
+            animator.SetBool("Run", false);
+            float targetAngle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg + playerCamera.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnCalmVelocity, turnCalmTime);
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+            Vector3 movedirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+            cC.Move(movedirection.normalized * playerSpeed * Time.deltaTime);
+        }
+        else
+        {
+            animator.SetBool("Walk", false);
+            animator.SetBool("Run", false);
+
+        }
+
+    }
+    void Jump()
+    {
+        if (Input.GetButtonDown("Jump") && OnSurface)
+        {
+            velocity.y = Mathf.Sqrt(jumrange * -2 * gravity);
+            animator.SetBool("Idle", false);
+            animator.SetTrigger("Jump");
+        }
+        else
+        {
+            animator.SetBool("Idle", true);
+            animator.ResetTrigger("Jump");
+        }
+
+    }
+    void sprint()
+    {
+        if (Input.GetKey(KeyCode.RightShift) && OnSurface && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.LeftArrow)))
+        {
+            float horizontal_move = Input.GetAxisRaw("Horizontal");
+            float Vertical_move = Input.GetAxisRaw("Vertical");
+            Vector3 direction = new Vector3(horizontal_move, 0f, Vertical_move).normalized;
+
+            if (direction.magnitude >= 0.1f)
+            {
+                animator.SetBool("Run", true);
+                animator.SetBool("Walk", false);
+                float targetAngle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg + playerCamera.eulerAngles.y;
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnCalmVelocity, turnCalmTime);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+                Vector3 movedirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+                cC.Move(movedirection.normalized * playerSprint * Time.deltaTime);
+            }
+            else
+            {
+                animator.SetBool("Run", false);
+                animator.SetBool("Walk", false);
+            }
+        }
+    }
+
+
+
+Gun shooting 
+_____________________________
+
+hand gun shooting method:
+________________________
+
+first of all we need to select a hand gun and than we have place prefab in the player finger with a empty game object named hand gun
+and than we need to add animator controller where we need to add the hand gun animation.all prefab or animation rig must be humonoid.
+
+Adding crosshair
+for adding crosshair in the game we first need to add a crosshair image and than we have to create a canvar and inside it we have to 
+add a picture and attach crosshair pic with the image. 
+
+for gun animation effect
+for adding effect on a gun and a object first we have to select the gun on the inspector menu and add a scripth name HandGun .the code
+for handgun is below:
+
+[
+
+    [Header("Rifle Things")]
+    public Camera cam;
+    public float giveDamage = 10f;
+    public float ShootingRange = 100f;
+    public ParticleSystem muzzleSpark;
+    public GameObject MetalEffect;//effect will shown on where the bullet will hit
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Mouse0))
+            shoot();
+    }
+    void shoot()
+    {
+        muzzleSpark.Play();
+        RaycastHit hitInfo;
+        if(Physics.Raycast(cam.transform.position,cam.transform.forward,out hitInfo,ShootingRange))
+        {
+            Debug.Log(hitInfo.transform.name);
+            Object obj = hitInfo.transform.GetComponent<Object>();
+            if (obj != null) {
+                obj.ObjectHitDamage(giveDamage);
+                Instantiate(MetalEffect,hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
+            }
+        }
+    }
+
+
+]
+
+than we need to create another script named OBJECT which we need to add on the object which we want to shoot.the object code
+is:
+
+[
+  public float objectHealth = 120f;
+    public void ObjectHitDamage(float damage)
+    {
+        objectHealth -= damage;
+        if(objectHealth <= 0 ) {
+            Die();
+        }
+    }
+    void Die()
+    {
+        Destroy(gameObject);
+    }
+   
+
+
+]
+than we have to add the fire animation in the Muzzle Spark and add the object fired animation to the MetalEffect.................
+
+firecharge: is a method by which we can control the time for one shoot from the gun
+the code for firecharge method is
+[
+//variables are:
+public float firecharge = 10f;
+    private float nextTimeToFire = 0f;
+
+private void Update()
+    {
+        if (Input.GetKey(KeyCode.Mouse0) && Time.time>=nextTimeToFire)
+        {    shoot();
+        nextTimeToFire = Time.time+1f/firecharge;
+	}
+}
+]
+which will be added on the handGun script.......................
+
+adding megazine reload and ammo to the game
+___________________________END______________________________
+
+
+Adding AI Pathway:
+_____________________________________________
+
+For adding AI character pathway we need to create a Editor folder inside Asset folder in unity. than we need to add to cSharp script and name of those Script are
+WayPointEditor and WayPointManager. the code for those two Script are:
+
+WapointEditor Script................................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
+
+[InitializeOnLoad()]
+public class WayPointEditor 
+{
+    [DrawGizmo(GizmoType.NotInSelectionHierarchy | GizmoType.Selected | GizmoType.Pickable)]
+    
+    public static void OnDrawSceneGizmos(WayPoint wayPoint,GizmoType gizmoType)
+    {
+        if((gizmoType & GizmoType.Selected)!=0)
+        {
+            Gizmos.color = Color.blue;
+        }
+        else
+        {
+            Gizmos.color= Color.blue*0.5f;
+        }
+        Gizmos.DrawSphere(wayPoint.transform.position, 0.05f);
+        Gizmos.color = Color.white;
+        Gizmos.DrawLine(wayPoint.transform.position + (wayPoint.transform.right * wayPoint.waypointWidth / 2f), wayPoint.transform.position - (wayPoint.transform.right * wayPoint.waypointWidth / 2f));
+    
+        if(wayPoint.previousWayPoint!= null)
+        {
+            Gizmos.color = Color.red;
+            Vector3 offset = wayPoint.transform.right * wayPoint.waypointWidth / 2f;
+            Vector3 offsetTo = wayPoint.previousWayPoint.transform.right * wayPoint.previousWayPoint.waypointWidth / 2f;
+
+            Gizmos.DrawLine(wayPoint.transform.position + offset, wayPoint.previousWayPoint.transform.position + offsetTo);
+        }
+        if (wayPoint.nextWayPoint != null)
+        {
+            Gizmos.color = Color.green;
+            Vector3 offset = wayPoint.transform.right * -wayPoint.waypointWidth / 2f;
+            Vector3 offsetTo = wayPoint.previousWayPoint.transform.right * -wayPoint.previousWayPoint.waypointWidth / 2f;
+
+            Gizmos.DrawLine(wayPoint.transform.position + offset, wayPoint.previousWayPoint.transform.position + offsetTo);
+        }
+
+    }
+}
+
+
+wayPointManagerWindow...............................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
+public class WayPointManagerWindow : EditorWindow
+{
+    [MenuItem("WayPoints/WayPoint Editor Tools")]
+    public static void ShowWindow()
+    {
+        GetWindow<WayPointManagerWindow>("WayPoint Editor Tools");
+    }
+    public Transform waypointOrigin;
+    private void OnGUI()
+    {
+        SerializedObject obj = new SerializedObject(this);
+
+        EditorGUILayout.PropertyField(obj.FindProperty("waypointOrigin"));
+        if(waypointOrigin==null)
+        {
+            EditorGUILayout.HelpBox("Please assign a Waypoint origin transform. ", MessageType.Warning);
+        }
+        else
+        {
+            EditorGUILayout.BeginVertical("box");
+            CreateButtons();
+            EditorGUILayout.EndVertical();
+        }
+        obj.ApplyModifiedProperties();
+    
+    }
+    void CreateButtons()
+    {
+        if(GUILayout.Button("Create Waypoint"))
+        {
+            CreateWayPoint();
+        }
+        if(Selection.activeGameObject!=null && Selection.activeGameObject.GetComponent<WayPoint>())
+        {
+            if(GUILayout.Button("Create Waypoint Before"))
+            {
+                CreateWayPointBefore();
+            }
+            if (GUILayout.Button("Create Waypoint After"))
+            {
+                CreateWayPointAfter();
+            }
+            if (GUILayout.Button("Remove Waypoint"))
+            {
+                RemoveWaypoint();
+            }
+        }
+    }
+    void CreateWayPoint()
+    {
+        GameObject waypointObject= new GameObject("Waypoint " + waypointOrigin.childCount,typeof(WayPoint));
+        waypointObject.transform.SetParent(waypointOrigin,false);
+
+        WayPoint waypoint =waypointObject.GetComponent<WayPoint>();
+        if(waypointOrigin.childCount > 1) {
+        waypoint.previousWayPoint=waypointOrigin.GetChild(waypointOrigin.childCount-2).GetComponent<WayPoint>();
+            waypoint.previousWayPoint.nextWayPoint = waypoint;
+
+            waypoint.transform.position = waypoint.previousWayPoint.transform.position;
+            waypoint.transform.forward= waypoint.previousWayPoint.transform.forward;
+        }
+
+        Selection.activeGameObject=waypointObject.gameObject;
+
+    }    
+    
+    void CreateWayPointBefore()
+    {
+        GameObject waypointObject = new GameObject("Waypoint " + waypointOrigin.childCount, typeof(WayPoint));
+        waypointObject.transform.SetParent(waypointOrigin, false);
+        WayPoint newWaypoint= waypointObject.GetComponent<WayPoint>();
+
+        WayPoint selectedWaypoint = Selection.activeGameObject.GetComponent<WayPoint>();
+
+        waypointObject.transform.position = selectedWaypoint.transform.position;
+        waypointObject.transform.position = selectedWaypoint.transform.forward;
+
+        if(selectedWaypoint.previousWayPoint)
+        {
+            newWaypoint.previousWayPoint = selectedWaypoint.previousWayPoint;
+            selectedWaypoint.previousWayPoint.nextWayPoint = newWaypoint;
+        }
+
+        newWaypoint.nextWayPoint = selectedWaypoint;
+        selectedWaypoint.previousWayPoint = newWaypoint;
+
+        newWaypoint.transform.SetSiblingIndex(selectedWaypoint.transform.GetSiblingIndex());
+        Selection.activeGameObject=newWaypoint.gameObject;
+    }
+    void CreateWayPointAfter()
+    {
+        GameObject waypointObject = new GameObject("Waypoint " + waypointOrigin.childCount, typeof(WayPoint));
+        waypointObject.transform.SetParent(waypointOrigin, false);
+        WayPoint newWaypoint = waypointObject.GetComponent<WayPoint>();
+
+        WayPoint selectedWaypoint = Selection.activeGameObject.GetComponent<WayPoint>();
+
+        waypointObject.transform.position = selectedWaypoint.transform.position;
+        waypointObject.transform.position = selectedWaypoint.transform.forward;
+        if(selectedWaypoint.nextWayPoint!=null) {
+            selectedWaypoint.nextWayPoint.previousWayPoint = newWaypoint;
+            newWaypoint.nextWayPoint= selectedWaypoint.nextWayPoint;
+        }
+        selectedWaypoint.nextWayPoint = newWaypoint;
+
+        newWaypoint.transform.SetSiblingIndex(selectedWaypoint.transform.GetSiblingIndex());
+        Selection.activeGameObject=newWaypoint.gameObject;
+
+    }
+    void RemoveWaypoint()
+    {
+        WayPoint selectedWaypoint = Selection.activeGameObject.GetComponent<WayPoint>();
+
+        if(selectedWaypoint.nextWayPoint!= null)
+        {
+            selectedWaypoint.nextWayPoint.previousWayPoint = selectedWaypoint.previousWayPoint;
+        }
+        if (selectedWaypoint.previousWayPoint!= null)
+        {
+            selectedWaypoint.previousWayPoint.nextWayPoint = selectedWaypoint.nextWayPoint;
+            Selection.activeGameObject = selectedWaypoint.previousWayPoint.gameObject;
+
+            DestroyImmediate(selectedWaypoint.gameObject);
+        
+        }
+
+    }
+}
+
+
+than we need to add one srcipt inside the cs script folder. that is wayPoint and the Script code for waypoint is................................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WayPoint : MonoBehaviour
+{
+    [Header("Waypoint Status")]
+    public WayPoint previousWayPoint;
+    public WayPoint nextWayPoint;
+
+    [Range(0f, 5f)]
+    public float waypointWidth;
+
+    public Vector3 GetPosition()
+    {
+        Vector3 minbound= transform.position+transform.right*waypointWidth/2f;
+        Vector3 maxbound = transform.position - transform.right * waypointWidth / 2f;
+        
+        return Vector3.Lerp(maxbound, minbound, Random.Range(0.2f,1f));
+    }
+}
+
+_________________________________________________________________________________________END_______________________________________________________________
+
+
+
+Adding AI character in Waypoint:
+_______________________________________
+
+than we need to add two script to the AI character those are character navigation Script and waypoint Nagivation. and we also need a rigidbody to the ai character.
+and tick the frize position y and frize rotation x and z. we also need to add a capsule collider to the ai character; 
+the two script for the ai character are:
+
+Character Navigation Script................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CharacterNavigatorScript : MonoBehaviour
+{
+    [Header("CharacterInfo")]
+    public float movingSpeed;
+    public float turningSpeed = 300f;
+    public float stopSpeed = 1f;
+
+    [Header("Destination Var")]
+    public Vector3 destination;
+    public bool destinationReached;
+
+    void Update()
+    {
+        Walk();
+ 
+
+    }
+
+    public void Walk()
+    {
+        if (transform.position != destination)
+        {
+            Vector3 destinationDirection = destination - transform.position; ;
+            destinationDirection.y = 0;
+            float destinationDistance = destinationDirection.magnitude;
+
+            if (destinationDistance >= stopSpeed)
+            {
+                //turning
+                destinationReached = false;
+                Quaternion targetRotation = Quaternion.LookRotation(destinationDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turningSpeed * Time.deltaTime);
+
+                //Move AI
+
+                transform.Translate(Vector3.forward * movingSpeed * Time.deltaTime);
+            }
+
+            else
+            {
+                destinationReached = true;
+            }
+        }
+
+        
+
+    }
+
+    public void LocateDestination(Vector3 destination)
+    {
+        this.destination = destination;
+        destinationReached = false;
+    }
+}
+
+
+Waypoint navigation.......................
+
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WayPointNavigator : MonoBehaviour
+{
+    [Header("NPC Character")]
+    public CharacterNavigatorScript character;
+    public WayPoint currentWaypoint;
+
+    private void Awake()
+    {
+        character = GetComponent<CharacterNavigatorScript>();
+    }
+
+    private void Start()
+    {
+        character.LocateDestination(currentWaypoint.GetPosition());
+    }
+
+    private void Update()
+    {
+        if(character.destinationReached)
+        {
+            currentWaypoint = currentWaypoint.nextWayPoint;
+            character.LocateDestination(currentWaypoint.GetPosition());
+        }
+    }
+}
+
+__________________________________END_________________________________________
+
+
+AI character Spawner 
+_______________________________________________
+
+
+first we have to create a csharp script which will be added in waypoint object and than we need to create all the ai character prefab and unpack them completely
+and after that we need to add the character prefab in the script.
+the code for waypoint AI spawner is........................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AISpawner : MonoBehaviour
+{
+    public GameObject[] AIPrefab;
+    public int AItoSpawn;
+    private  void Start()
+    {
+        StartCoroutine(Spawn());
+        
+    }
+    IEnumerator Spawn()
+    {
+        int count = 0;
+        while(count < AItoSpawn)
+        {
+            int randomIndex= Random.Range(0, AIPrefab.Length);
+
+            GameObject obj = Instantiate(AIPrefab[randomIndex]);
+            Transform child = transform.GetChild(Random.Range(0, transform.childCount - 1));
+            obj.GetComponent<WayPointNavigator>().currentWaypoint = child.GetComponent<WayPoint>();
+
+            obj.transform.position = child.position;
+
+            yield return new WaitForSeconds(1f);
+            count++;
+
+        }
+    }
+}
+
+____________________________END_______________________________
+
+
+AI Car Scripts:
+________________________________
+
+
+IN script folder we need to add one folder named AI Car Script. Inside this script we need to add 2 script name CarNagivator and CarWayPointNagivator.
+Those two script are:
+
+CarNagivator script..............................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CarNevigator : MonoBehaviour
+{
+
+    [Header("Car Info")]
+    public float movingSpeed;
+    public float turningSpeed = 300f;
+    public float stopSpeed = 1f;
+    public GameObject sensor;
+    float detectionRange = 10f;
+
+    [Header("Destination Var")]
+    public Vector3 destination;
+    public bool destinationReached;
+    public PLayer player;
+    void Update()
+    {
+        RaycastHit hitinfo;
+        if(Physics.Raycast(sensor.transform.position,sensor.transform.forward,out hitinfo,detectionRange))
+        {
+            Debug.Log(hitinfo.transform.name);
+            CharacterNavigatorScript characterNPC=hitinfo.transform.GetComponent<CharacterNavigatorScript>();
+            PLayer playerBody=hitinfo.transform.GetComponent<PLayer>();
+            if(characterNPC!=null)
+            {
+                movingSpeed = 0f;
+                return;
+            }
+            else if(playerBody!=null)
+            {
+                movingSpeed = 0f;
+                return;
+            }
+
+        }
+
+        Drive();
+
+
+    }
+
+    public void Drive()
+    {
+        movingSpeed = 10f;
+        if (transform.position != destination)
+        {
+            Vector3 destinationDirection = destination - transform.position; ;
+            destinationDirection.y = 0;
+            float destinationDistance = destinationDirection.magnitude;
+
+            if (destinationDistance >= stopSpeed)
+            {
+                //turning
+                destinationReached = false;
+                Quaternion targetRotation = Quaternion.LookRotation(destinationDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turningSpeed * Time.deltaTime);
+
+                //Move AI
+
+                transform.Translate(Vector3.forward * movingSpeed * Time.deltaTime);
+            }
+
+            else
+            {
+                destinationReached = true;
+            }
+        }
+
+
+
+    }
+
+    public void LocateDestination(Vector3 destination)
+    {
+        this.destination = destination;
+        destinationReached = false;
+    }
+}
+
+
+CarWayPointNagivator..................................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CarWayPointNavigator : MonoBehaviour
+{
+    [Header("Car AI")]
+    public CarNevigator car;
+    public WayPoint currentWaypoint;
+    private void Awake()
+    {
+        car= GetComponent<CarNevigator>();
+    }
+    private void Start()
+    {
+        car.LocateDestination(currentWaypoint.GetPosition());
+    }
+    private void Update()
+    {
+        if(car.destinationReached)
+        {
+            currentWaypoint = currentWaypoint.nextWayPoint;
+            car.LocateDestination(currentWaypoint.GetPosition()); 
+        }
+    }
+}
+
+
+_________________________END____________________________
+
+
+Wanted Level Script:
+__________________________
+
+
+
+For adding wanted level system we need a scipt named wantedlevel
+codes are..................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WantedLevel : MonoBehaviour
+{
+    public PLayer player;
+    public bool wantedLevel1;
+    public bool wantedLevel2;
+    public bool wantedLevel3;
+    public bool wantedLevel4;
+    public bool wantedLevel5;
+    private void Update()
+    {
+        if(player.currentKills==2)
+        {
+            wantedLevel1 = true;
+        }
+        if(player.currentKills>=3)
+        {
+            wantedLevel2 = true;
+        }
+        if(player.currentKills>=5)
+        {
+            wantedLevel3 = true;
+        }
+        if(player.currentKills>=10)
+        {
+            wantedLevel4 = true;
+        }
+        if(player.currentKills>=15) {  
+        wantedLevel5 = true;
+        }
+      
+    }
+}
+
+and for adding a police on the environment we need to add two script named policeOfficer and policewaypointNavigator
+
+codes for police officer:
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor.PackageManager;
+using UnityEngine;
+
+public class PoliceOfficers : MonoBehaviour
+{
+    [Header("Character info")]
+    public float movingSpeed;
+    public float runningSpeed;
+    private float currentMovingSpeed;
+    public float turningSpeed = 300f;
+    public float stopSpeed = 1f;
+
+    [Header("Destination Var")]
+    public Vector3 destination;
+    public bool destinationReached;
+
+    [Header("Police AI")]
+    public GameObject playerBody;
+    public LayerMask PlayerLayer;
+    public float visionRadius;
+    public float shootingRadius;
+    public bool playerInvisionRadius;
+    public bool playerInshootRadius;
+    public Animator animator;
+    private float characterHealth = 100f;
+    float presentHealth;
+    public GameObject BloodEffect;
+
+
+
+
+
+    [Header("Police shooting Var")]
+    public float giveDamageOf = 3f;
+    public float shootingRange = 100f;
+    public GameObject ShootingRayCastArea;
+    public float timebtwShoot;
+    bool previouslyShoot;
+    
+    public WantedLevel wantedLevelScript;
+    public PLayer player;
+
+
+    private void Start()
+    {
+        presentHealth = characterHealth;
+        playerBody = GameObject.Find("Player");
+        wantedLevelScript = GameObject.FindObjectOfType<WantedLevel>();
+        currentMovingSpeed = movingSpeed;
+        player = GameObject.FindObjectOfType<PLayer>();
+
+    }
+    private void Update()
+    {
+        playerInvisionRadius = Physics.CheckSphere(transform.position, visionRadius, PlayerLayer);
+        playerInshootRadius = Physics.CheckSphere(transform.position, shootingRadius, PlayerLayer);
+        if(!playerInshootRadius && !playerInvisionRadius && wantedLevelScript.wantedLevel1==false ||wantedLevelScript.wantedLevel2==false || wantedLevelScript.wantedLevel3==false ||wantedLevelScript.wantedLevel4==false && wantedLevelScript.wantedLevel5==false)
+        {
+            Walk();
+        }
+        if(!playerInshootRadius && playerInvisionRadius && wantedLevelScript.wantedLevel1 == true || wantedLevelScript.wantedLevel2 == true || wantedLevelScript.wantedLevel3 == true || wantedLevelScript.wantedLevel4 == true && wantedLevelScript.wantedLevel5 == true)
+        {
+            ChasePlayer();
+        }
+        if (playerInshootRadius && playerInvisionRadius && wantedLevelScript.wantedLevel1 == true || wantedLevelScript.wantedLevel2 == true || wantedLevelScript.wantedLevel3 == true || wantedLevelScript.wantedLevel4 == true && wantedLevelScript.wantedLevel5 == true)
+        {
+            
+            ShootPlayer();
+        }
+
+    }
+    void ChasePlayer()
+    {
+        transform.position += transform.forward * currentMovingSpeed * Time.deltaTime;
+        transform.LookAt(playerBody.transform);
+
+        animator.SetBool("Walk", false);
+        animator.SetBool("Run", true);
+        animator.SetBool("Shoot", false);
+
+        currentMovingSpeed = runningSpeed;
+    }
+    void Walk()
+    {
+        currentMovingSpeed = movingSpeed;
+        if (transform.position != destination)
+        {
+            Vector3 destinationDirection = destination - transform.position; ;
+            destinationDirection.y = 0;
+            float destinationDistance = destinationDirection.magnitude;
+
+            if (destinationDistance >= stopSpeed)
+            {
+                //turning
+                destinationReached = false;
+                Quaternion targetRotation = Quaternion.LookRotation(destinationDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turningSpeed * Time.deltaTime);
+
+                //Move AI
+               transform.Translate(Vector3.forward * movingSpeed * Time.deltaTime);
+                animator.SetBool("Walk", true);
+                animator.SetBool("Run", false);
+                animator.SetBool("Shoot", false);
+
+            }
+
+            else
+            {
+                destinationReached = true;
+            }
+        }
+    }
+
+    public void LocateDestination(Vector3 destination)
+    {
+        this.destination = destination;
+        destinationReached = false;
+    }
+    public void ShootPlayer()
+    {
+        currentMovingSpeed = 0f;
+
+        transform.LookAt(playerBody.transform);
+        animator.SetBool("Walk", false);
+        animator.SetBool("Run", false);
+        animator.SetBool("Shoot", true);
+        if (!previouslyShoot)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(ShootingRayCastArea.transform.position, ShootingRayCastArea.transform.forward, out hit, shootingRange))
+            {
+                Debug.Log("Shooting" + hit.transform.name);
+                PlayerController playerBody = hit.transform.GetComponent<PlayerController>();
+                if (playerBody != null)
+                {
+                    playerBody.playerHitDamage(giveDamageOf);
+                    //those two lines are for hiting effect while hit the object
+                    GameObject bloodObjectGo = Instantiate(BloodEffect, hit.point, Quaternion.LookRotation(hit.normal));
+                    Destroy(bloodObjectGo, 1.0f);
+                }
+            }
+            previouslyShoot = true;
+                Invoke(nameof(ActiveShooting), timebtwShoot);
+            
+            
+            
+        }
+    }
+    private void ActiveShooting()
+    {
+        previouslyShoot = false;
+    }
+
+    public void characterDamage(float takeDamage)
+    {
+        presentHealth -= takeDamage;
+        if (presentHealth <= 0)
+        {
+            animator.SetBool("Die", true);
+            CharacterDie();
+
+        }
+    }
+    private void CharacterDie()
+    {
+        currentMovingSpeed = 0f;
+        gameObject.GetComponent<CapsuleCollider>().enabled = false;
+        player.currentKills += 1;
+        shootingRange =0f;
+        Object.Destroy(gameObject, 3.0f);
+        player.playerMoney += 10; 
+    }
+}
+
+
+code for policeWayPointNagivator...............................
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PoliceNPCWayPointNagivator : MonoBehaviour
+{
+    [Header("NPC Character")]
+    public PoliceOfficers character;
+    public WayPoint currentWaypoint;
+    int direction;
+    private void Awake()
+    {
+        character = GetComponent<PoliceOfficers>();
+    }
+
+    private void Start()
+    {
+        direction = Mathf.RoundToInt(Random.Range(0f, 1f));
+        character.LocateDestination(currentWaypoint.GetPosition());
+    }
+
+    private void Update()
+    {
+        if (character.destinationReached)
+        {
+            bool shouldBranch = false;
+            if (currentWaypoint.brances != null && currentWaypoint.brances.Count > 0)
+            {
+                shouldBranch = Random.Range(0f, 1f) <= currentWaypoint.branchRatio ? true : false;
+            }
+            if (shouldBranch)
+            {
+                currentWaypoint = currentWaypoint.brances[Random.Range(0, currentWaypoint.brances.Count - 1)];
+            }
+            else
+            {
+                if (direction == 0)
+                {
+                    if (currentWaypoint.nextWayPoint != null)
+                    {
+                        currentWaypoint = currentWaypoint.nextWayPoint;
+                    }
+                    else
+                    {
+                        currentWaypoint = currentWaypoint.previousWayPoint;
+                        direction = 1;
+                    }
+                }
+                else if (direction == 1)
+                {
+                    if (currentWaypoint.previousWayPoint != null)
+                    {
+                        currentWaypoint = currentWaypoint.previousWayPoint;
+                    }
+                    else
+                    {
+                        currentWaypoint = currentWaypoint.nextWayPoint;
+                        direction = 0;
+                    }
+                }
+            }
+            character.LocateDestination(currentWaypoint.GetPosition());
+        }
+    }
+}
+
+
+
+
+
+
+ 
