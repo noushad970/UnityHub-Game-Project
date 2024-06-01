@@ -2,3 +2,29 @@ First I have to install two package named "Netcode for gameobject" and "Multipla
 Than I have to create a gameobject named "NetworkManager" and add Game Manager Script to the NetworkManager. 
 Than I have to select the gameobject Network Manager and select transport to unity transport. 
 Now I need to add the player to the scene view.
+Now add NetworkObject script to the player and make a prefab of the player and add it in network manager's player prefab.
+Than I have to select networkManager and click on + icon on Network prefab and add the player prefab in it.
+Now I have to add a canvas and three button named SERVER, HOST and CLIENT which will be placed on top right of the screen.
+Add a script name NetworkManagerUI to the panel of the button canvas. named the panel as NetworkManagerUI.
+again go to the NetworkManager and change log level from normal to developer.
+Add Network Transform script to the Player prefab.
+Now for client network transform I need to copy " https://github.com/Unity-Technologies/com.unity.multiplayer.samples.coop.git?path=/Packages/com.unity.multiplayer.samples.coop#main "
+url and go to unity editor, package manager, click on + icon and than click on add from git and paste the link and download.
+After that remove Network transform script from player prefab and add client network transform to the player prefab.
+If we want to spawn an object in both player screen than we need to add that gameobject on scene than we need to add script 
+NetworkObject to the game object. and make a prefab of that object and delete that. than we also have to add the prefab to the 
+network prefab list. 
+If we want to transform the animation of the character to the other screen than we just need to create a script name OwnerNetworkAnimator and paste the following code:
+using Unity.Netcode.Components;
+public class OwnerNetworkAnimator : NetworkAnimator
+{    protected override bool OnIsServerAuthoritative()
+    {
+        return false;
+    }
+}
+//thats all for netcode
+Now lets talk about lobby
+for creating a lobby first I need to add lobby package to the project.
+
+
+
