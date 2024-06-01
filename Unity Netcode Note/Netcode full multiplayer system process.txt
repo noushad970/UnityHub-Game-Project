@@ -1,0 +1,4 @@
+First I have to install two package named "Netcode for gameobject" and "Multiplayer tools" from unity registry.
+Than I have to create a gameobject named "NetworkManager" and add Game Manager Script to the NetworkManager. 
+Than I have to select the gameobject Network Manager and select transport to unity transport. 
+Now I need to add the player to the scene view.
