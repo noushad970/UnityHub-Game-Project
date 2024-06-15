@@ -22,6 +22,13 @@ public class OwnerNetworkAnimator : NetworkAnimator
         return false;
     }
 }
+if we want to create or control something from server we just need to make the script network Behaviour and if update function i have to 
+apply one condition on update method
+if(!isServer)return;
+
+
+
+
 //thats all for netcode
 Now lets talk about lobby
 for creating a lobby first I need to add lobby package to the project.
