@@ -43,6 +43,11 @@ void methodClientRpc()
     //code for both host and client
 }
 
+//use's of network variable
+Network variable is another type of method by which we can sync network data.
+example: public NetworkVariable<float> netVariable;
+and we mush use OnNetworkSpawn method exchange of Start or Awake
+
 
 
 //thats all for netcode
