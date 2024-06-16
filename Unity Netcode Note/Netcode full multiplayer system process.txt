@@ -25,7 +25,23 @@ public class OwnerNetworkAnimator : NetworkAnimator
 if we want to create or control something from server we just need to make the script network Behaviour and if update function i have to 
 apply one condition on update method
 if(!isServer)return;
+if I want to sync somefunction for both client and host than I need to use Rpc system.
+and static is not suitable for Rpc. Example
 
+void method()
+{
+methodServerRpc();
+}
+[ServerRpc]
+void methodServerRpc()
+{
+methodClientRpc();
+}
+[ClientRpc]
+void methodClientRpc()
+{
+    //code for both host and client
+}
 
 
 
