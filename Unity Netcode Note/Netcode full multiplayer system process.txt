@@ -64,3 +64,6 @@ private void Override OnNetworkSpawn()
 {
 transform.position=spawnPositionList[(int)OwnerClientId];
 }
+
+Network variable is use to sync data from any states of a server. for example if a player join late in the server network variable will 
+automatically sync that state data in client player screen.
