@@ -54,5 +54,13 @@ and we mush use OnNetworkSpawn method exchange of Start or Awake
 Now lets talk about lobby
 for creating a lobby first I need to add lobby package to the project.
 
-
-
+//Spawning position system
+for spawn a object in different position I first need to add a list of Vector3 type. than I have to assign the value from the 
+unity editor,
+than I need to write this code on spawning an object.
+[serializedfield]
+private list<Vector3> spawnPositionList;
+private void Override OnNetworkSpawn()
+{
+transform.position=spawnPositionList[(int)OwnerClientId];
+}
