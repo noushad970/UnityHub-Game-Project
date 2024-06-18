@@ -64,6 +64,19 @@ private void Override OnNetworkSpawn()
 {
 transform.position=spawnPositionList[(int)OwnerClientId];
 }
-
+//destroy all object when the server is broke or the host left the game or all player left the game
+when all player left the game scene and come to main menu scene than we need to destroy all the objects of that network scene.
+for that we have to write some code on awake function on the scene in which the player will come after the multiplayer game is close
+or multiplayer server is finished.
+the code will attach in a gameobject:
+code will be:
+private void Awake()
+{
+if(NetworkManager.Singleton!=null)
+{
+destroy(NetworkManager.Singleton.gameObject)
+}
+//if any game object remain than I just need to apply an if condition and destroy that object
+}
 Network variable is use to sync data from any states of a server. for example if a player join late in the server network variable will 
 automatically sync that state data in client player screen.
